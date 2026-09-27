@@ -42,6 +42,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
+#include <chrono>
 
 // ---------------------------------------------------------------------
 // CONSTANTES GLOBAIS
@@ -52,6 +53,7 @@ const int MAX_ITERACOES = 1000; // numero maximo de iteracoes permitido
 // as duas tolerancias pedidas no criterio de parada (imagem do enunciado)
 const double TOL_1 = 1e-4;
 const double TOL_2 = 1e-8;
+const double CHUTE_INICIAL = 0.0;
 
 // matrizes/vetores globais (tamanho fixo, evita alocacao dinamica -> mais didatico)
 double A[N][N];
@@ -168,6 +170,27 @@ void imprimirVetor(const char *titulo, double v[N])
         printf("  x[%2d] = %12.6f\n", i, v[i]);
     }
     printf("\n");
+}
+
+void registrarResultado(FILE *arquivo, const char *metodo, double tempo,
+                        int iteracoes, double solucao[N], double erro)
+{
+    fprintf(arquivo, "--- %s ---\n", metodo);
+    fprintf(arquivo, "Tempo exigido: %.6f ms\n", tempo);
+    if (iteracoes >= 0)
+    {
+        fprintf(arquivo, "Status: CONVERGIU\n");
+        fprintf(arquivo, "Iteracoes ate convergir: %d\n", iteracoes);
+    }
+    else
+    {
+        fprintf(arquivo, "Status: NAO CONVERGIU\n");
+        fprintf(arquivo, "Iteracoes ate convergir: nao atingiu o criterio\n");
+    }
+    fprintf(arquivo, "Solucao:\n");
+    for (int i = 0; i < N; i++)
+        fprintf(arquivo, "  x[%2d] = %12.6f\n", i, solucao[i]);
+    fprintf(arquivo, "Maior diferenca em relacao ao metodo direto: %e\n\n", erro);
 }
 
 // ---------------------------------------------------------------------
@@ -298,7 +321,7 @@ void metodoJacobi(double x[N], double tolerancia, int *iteracoesRealizadas)
 
     // chute inicial: vetor nulo
     for (int i = 0; i < N; i++)
-        xAntigo[i] = 0.0;
+        xAntigo[i] = CHUTE_INICIAL;
 
     int k;
     for (k = 0; k < MAX_ITERACOES; k++)
@@ -359,7 +382,7 @@ void metodoGaussSeidel(double x[N], double tolerancia, int *iteracoesRealizadas)
 
     // chute inicial: vetor nulo
     for (int i = 0; i < N; i++)
-        xAtual[i] = 0.0;
+        xAtual[i] = CHUTE_INICIAL;
 
     int k;
     for (k = 0; k < MAX_ITERACOES; k++)
@@ -399,6 +422,121 @@ void metodoGaussSeidel(double x[N], double tolerancia, int *iteracoesRealizadas)
 }
 
 // ---------------------------------------------------------------------
+// FUNCOES: metodoJacobiOrdem2 e metodoGaussSeidelOrdem2
+// Versoes de ordem 2 que usam as duas aproximacoes anteriores para
+// extrapolar a nova aproximacao.
+// ---------------------------------------------------------------------
+void metodoJacobiOrdem2(double x[N], double tolerancia, int *iteracoesRealizadas)
+{
+    double xAnterior[N];
+    double xAtual[N];
+    double xJacobi[N];
+
+    for (int i = 0; i < N; i++)
+    {
+        xAnterior[i] = CHUTE_INICIAL;
+        xAtual[i] = CHUTE_INICIAL;
+    }
+
+    int k;
+    for (k = 0; k < MAX_ITERACOES; k++)
+    {
+        for (int i = 0; i < N; i++)
+        {
+            double soma = b[i];
+            for (int j = 0; j < N; j++)
+            {
+                if (j != i)
+                    soma -= A[i][j] * xAtual[j];
+            }
+            xJacobi[i] = soma / A[i][i];
+        }
+
+        double maiorDiferenca = 0.0;
+        for (int i = 0; i < N; i++)
+        {
+            double valorNovo = xJacobi[i];
+            if (k > 0)
+                valorNovo += 0.5 * (xJacobi[i] - xAnterior[i]);
+
+            double diferenca = fabs(valorNovo - xAtual[i]);
+            if (diferenca > maiorDiferenca)
+                maiorDiferenca = diferenca;
+
+            xAnterior[i] = xAtual[i];
+            xAtual[i] = valorNovo;
+        }
+
+        if (maiorDiferenca < tolerancia)
+        {
+            k++;
+            break;
+        }
+    }
+
+    *iteracoesRealizadas = k;
+    for (int i = 0; i < N; i++)
+        x[i] = xAtual[i];
+}
+
+void metodoGaussSeidelOrdem2(double x[N], double tolerancia,
+                             int *iteracoesRealizadas)
+{
+    double xAnterior[N];
+    double xAtual[N];
+    double xSeidel[N];
+
+    for (int i = 0; i < N; i++)
+    {
+        xAnterior[i] = CHUTE_INICIAL;
+        xAtual[i] = CHUTE_INICIAL;
+    }
+
+    int k;
+    for (k = 0; k < MAX_ITERACOES; k++)
+    {
+        for (int i = 0; i < N; i++)
+            xSeidel[i] = xAtual[i];
+
+        for (int i = 0; i < N; i++)
+        {
+            double soma = b[i];
+            for (int j = 0; j < N; j++)
+            {
+                if (j != i)
+                    soma -= A[i][j] * xSeidel[j];
+            }
+            xSeidel[i] = soma / A[i][i];
+        }
+
+        double maiorDiferenca = 0.0;
+        for (int i = 0; i < N; i++)
+        {
+            double valorNovo = xSeidel[i];
+            if (k > 0)
+                valorNovo += 0.5 * (xSeidel[i] - xAnterior[i]);
+
+            double diferenca = fabs(valorNovo - xAtual[i]);
+            if (diferenca > maiorDiferenca)
+                maiorDiferenca = diferenca;
+
+            xAnterior[i] = xAtual[i];
+            xAtual[i] = valorNovo;
+        }
+
+        if (maiorDiferenca < tolerancia)
+        {
+            k++;
+            break;
+        }
+    }
+
+    *iteracoesRealizadas = k;
+    for (int i = 0; i < N; i++)
+        x[i] = xAtual[i];
+}
+
+// ---------------------------------------------------------------------
 // FUNCAO: calcularErroMaximo
 // Calcula a maior diferenca absoluta entre dois vetores (usada para
 // comparar a solucao iterativa com a solucao "gabarito" da Eliminacao de Gauss)
@@ -416,33 +554,234 @@ double calcularErroMaximo(double v1[N], double v2[N])
 }
 
 // ---------------------------------------------------------------------
+// FUNCOES auxiliares usadas pelo Gradiente Conjugado e pelo CGS.
+// ---------------------------------------------------------------------
+void produtoMatrizVetor(double vetor[N], double resultado[N])
+{
+    for (int i = 0; i < N; i++)
+    {
+        resultado[i] = 0.0;
+        for (int j = 0; j < N; j++)
+            resultado[i] += A[i][j] * vetor[j];
+    }
+}
+
+double produtoEscalar(double v1[N], double v2[N])
+{
+    double resultado = 0.0;
+    for (int i = 0; i < N; i++)
+        resultado += v1[i] * v2[i];
+    return resultado;
+}
+
+double normaMaxima(double vetor[N])
+{
+    double maior = 0.0;
+    for (int i = 0; i < N; i++)
+    {
+        if (fabs(vetor[i]) > maior)
+            maior = fabs(vetor[i]);
+    }
+    return maior;
+}
+
+bool matrizSimetrica()
+{
+    const double toleranciaSimetria = 1e-12;
+
+    for (int i = 0; i < N; i++)
+    {
+        for (int j = i + 1; j < N; j++)
+        {
+            if (fabs(A[i][j] - A[j][i]) > toleranciaSimetria)
+                return false;
+        }
+    }
+    return true;
+}
+
+// ---------------------------------------------------------------------
+// FUNCAO: metodoGradienteConjugado
+// Resolve A * x = b para matrizes simetricas (preferencialmente definidas
+// positivas), usando o residuo como criterio de parada.
+// ---------------------------------------------------------------------
+void metodoGradienteConjugado(double x[N], double tolerancia, int *iteracoesRealizadas)
+{
+    double residuo[N];
+    double direcao[N];
+    double produtoDirecao[N];
+
+    for (int i = 0; i < N; i++)
+    {
+        x[i] = CHUTE_INICIAL;
+        residuo[i] = b[i];
+        direcao[i] = residuo[i];
+    }
+
+    double residuoAnterior = produtoEscalar(residuo, residuo);
+    int k;
+
+    for (k = 0; k < MAX_ITERACOES; k++)
+    {
+        produtoMatrizVetor(direcao, produtoDirecao);
+        double denominador = produtoEscalar(direcao, produtoDirecao);
+
+        if (fabs(denominador) < 1e-30)
+            break;
+
+        double alfa = residuoAnterior / denominador;
+        for (int i = 0; i < N; i++)
+        {
+            x[i] += alfa * direcao[i];
+            residuo[i] -= alfa * produtoDirecao[i];
+        }
+
+        if (normaMaxima(residuo) < tolerancia)
+        {
+            k++;
+            break;
+        }
+
+        double residuoAtual = produtoEscalar(residuo, residuo);
+        double beta = residuoAtual / residuoAnterior;
+        for (int i = 0; i < N; i++)
+            direcao[i] = residuo[i] + beta * direcao[i];
+
+        residuoAnterior = residuoAtual;
+    }
+
+    *iteracoesRealizadas = k;
+}
+
+// ---------------------------------------------------------------------
+// FUNCAO: metodoGradienteConjugadoQuadrado
+// Resolve A * x = b para matrizes nao simetricas pelo metodo CGS.
+// ---------------------------------------------------------------------
+void metodoGradienteConjugadoQuadrado(double x[N], double tolerancia,
+                                      int *iteracoesRealizadas)
+{
+    double residuo[N];
+    double residuoBase[N];
+    double p[N];
+    double q[N];
+    double u[N];
+    double soma[N];
+    double produtoSoma[N];
+
+    for (int i = 0; i < N; i++)
+    {
+        x[i] = CHUTE_INICIAL;
+        residuo[i] = b[i];
+        residuoBase[i] = residuo[i];
+        p[i] = 0.0;
+        q[i] = 0.0;
+    }
+
+    double rhoAnterior = 1.0;
+    bool convergiu = false;
+    int k;
+
+    for (k = 0; k < MAX_ITERACOES; k++)
+    {
+        double rhoAtual = produtoEscalar(residuoBase, residuo);
+        if (fabs(rhoAtual) < 1e-30)
+            break;
+
+        double beta = (k == 0) ? 0.0 : rhoAtual / rhoAnterior;
+        for (int i = 0; i < N; i++)
+        {
+            u[i] = residuo[i] + beta * q[i];
+            p[i] = u[i] + beta * (q[i] + beta * p[i]);
+        }
+
+        double produtoP[N];
+        produtoMatrizVetor(p, produtoP);
+        double denominador = produtoEscalar(residuoBase, produtoP);
+        if (fabs(denominador) < 1e-30)
+            break;
+
+        double alfa = rhoAtual / denominador;
+        for (int i = 0; i < N; i++)
+            q[i] = u[i] - alfa * produtoP[i];
+
+        for (int i = 0; i < N; i++)
+            soma[i] = u[i] + q[i];
+
+        produtoMatrizVetor(soma, produtoSoma);
+        for (int i = 0; i < N; i++)
+        {
+            x[i] += alfa * soma[i];
+            residuo[i] -= alfa * produtoSoma[i];
+        }
+
+        if (normaMaxima(residuo) < tolerancia)
+        {
+            convergiu = true;
+            k++;
+            break;
+        }
+
+        rhoAnterior = rhoAtual;
+    }
+
+    *iteracoesRealizadas = convergiu ? k : -1;
+}
+
+// ---------------------------------------------------------------------
 // FUNCAO PRINCIPAL
 // ---------------------------------------------------------------------
 int main()
 {
+    FILE *arquivoResultados = fopen("resultados.txt", "w");
+    if (arquivoResultados == NULL)
+    {
+        printf("ERRO: nao foi possivel criar o arquivo resultados.txt\n");
+        return 1;
+    }
+
+    fprintf(arquivoResultados, "RESULTADOS DA RESOLUCAO DO SISTEMA LINEAR\n\n");
+
     printf("==========================================================\n");
     printf(" RESOLUCAO DE SISTEMA LINEAR 36 x 36 (A * x = b)\n");
     printf("==========================================================\n\n");
 
     // -------- leitura dos arquivos de entrada --------
     if (!lerMatrizA("Matriz_A.csv"))
+    {
+        fclose(arquivoResultados);
         return 1;
+    }
 
     if (!lerVetorB("Vetor_B.csv"))
+    {
+        fclose(arquivoResultados);
         return 1;
+    }
 
     printf("Arquivos lidos com sucesso (A: %dx%d, b: %d).\n\n", N, N, N);
 
     verificarDiagonalDominante();
 
+    bool ehSimetrica = matrizSimetrica();
+    printf("A matriz A %s simetrica.\n\n",
+           ehSimetrica ? "e" : "nao e");
+
     // -------- 1) solucao pelo metodo DIRETO (gabarito) --------
     double xGauss[N];
+    std::chrono::high_resolution_clock::time_point inicioGauss =
+        std::chrono::high_resolution_clock::now();
     eliminacaoGauss(xGauss);
+    std::chrono::high_resolution_clock::time_point fimGauss =
+        std::chrono::high_resolution_clock::now();
+    double tempoGauss = std::chrono::duration<double, std::milli>(fimGauss - inicioGauss).count();
 
     printf("---------------------------------------------------------\n");
     printf("1) SOLUCAO PELA ELIMINACAO DE GAUSS (metodo direto)\n");
     printf("---------------------------------------------------------\n");
+    printf("Tempo exigido: %.6f ms\n", tempoGauss);
     imprimirVetor("Solucao x:", xGauss);
+    registrarResultado(arquivoResultados, "ELIMINACAO DE GAUSS", tempoGauss, 0,
+                       xGauss, 0.0);
 
     // -------- 2) e 3) metodos iterativos, para as duas tolerancias --------
     double tolerancias[2] = {TOL_1, TOL_2};
@@ -454,29 +793,146 @@ int main()
         printf("===========================================================\n");
         printf(" CRITERIO DE PARADA: |x_i^(k+1) - x_i^(k)| < %.0e\n", tol);
         printf("===========================================================\n\n");
+        fprintf(arquivoResultados,
+            "===========================================================\n");
+        fprintf(arquivoResultados,
+            "CRITERIO DE PARADA: |x_i^(k+1) - x_i^(k)| < %.0e\n",
+            tol);
+        fprintf(arquivoResultados,
+            "===========================================================\n\n");
 
         // ---- Jacobi ----
         double xJacobi[N];
         int iterJacobi = 0;
+        std::chrono::high_resolution_clock::time_point inicioJacobi =
+            std::chrono::high_resolution_clock::now();
         metodoJacobi(xJacobi, tol, &iterJacobi);
+        std::chrono::high_resolution_clock::time_point fimJacobi =
+            std::chrono::high_resolution_clock::now();
+        double tempoJacobi = std::chrono::duration<double, std::milli>(fimJacobi - inicioJacobi).count();
 
         printf("--- Metodo de JACOBI ---\n");
+        printf("Tempo exigido: %.6f ms\n", tempoJacobi);
         printf("Iteracoes ate convergir: %d\n", iterJacobi);
         imprimirVetor("Solucao x (Jacobi):", xJacobi);
         printf("Maior diferenca em relacao ao metodo direto: %e\n\n",
                calcularErroMaximo(xJacobi, xGauss));
+        registrarResultado(arquivoResultados, "JACOBI", tempoJacobi,
+                   iterJacobi, xJacobi,
+                   calcularErroMaximo(xJacobi, xGauss));
 
         // ---- Gauss-Seidel ----
         double xSeidel[N];
         int iterSeidel = 0;
+        std::chrono::high_resolution_clock::time_point inicioSeidel =
+            std::chrono::high_resolution_clock::now();
         metodoGaussSeidel(xSeidel, tol, &iterSeidel);
+        std::chrono::high_resolution_clock::time_point fimSeidel =
+            std::chrono::high_resolution_clock::now();
+        double tempoSeidel = std::chrono::duration<double, std::milli>(fimSeidel - inicioSeidel).count();
 
         printf("--- Metodo de GAUSS-SEIDEL ---\n");
+        printf("Tempo exigido: %.6f ms\n", tempoSeidel);
         printf("Iteracoes ate convergir: %d\n", iterSeidel);
         imprimirVetor("Solucao x (Gauss-Seidel):", xSeidel);
         printf("Maior diferenca em relacao ao metodo direto: %e\n\n",
                calcularErroMaximo(xSeidel, xGauss));
+        registrarResultado(arquivoResultados, "GAUSS-SEIDEL", tempoSeidel,
+                   iterSeidel, xSeidel,
+                   calcularErroMaximo(xSeidel, xGauss));
+
+        // ---- Jacobi de ordem 2 ----
+        double xJacobiOrdem2[N];
+        int iterJacobiOrdem2 = 0;
+        std::chrono::high_resolution_clock::time_point inicioJacobiOrdem2 =
+            std::chrono::high_resolution_clock::now();
+        metodoJacobiOrdem2(xJacobiOrdem2, tol, &iterJacobiOrdem2);
+        std::chrono::high_resolution_clock::time_point fimJacobiOrdem2 =
+            std::chrono::high_resolution_clock::now();
+        double tempoJacobiOrdem2 =
+            std::chrono::duration<double, std::milli>(fimJacobiOrdem2 - inicioJacobiOrdem2).count();
+
+        printf("--- Metodo de JACOBI DE ORDEM 2 ---\n");
+        printf("Tempo exigido: %.6f ms\n", tempoJacobiOrdem2);
+        printf("Iteracoes ate convergir: %d\n", iterJacobiOrdem2);
+        imprimirVetor("Solucao x (Jacobi de ordem 2):", xJacobiOrdem2);
+        printf("Maior diferenca em relacao ao metodo direto: %e\n\n",
+               calcularErroMaximo(xJacobiOrdem2, xGauss));
+        registrarResultado(arquivoResultados, "JACOBI DE ORDEM 2",
+                   tempoJacobiOrdem2, iterJacobiOrdem2,
+                   xJacobiOrdem2,
+                   calcularErroMaximo(xJacobiOrdem2, xGauss));
+
+        // ---- Gauss-Seidel de ordem 2 ----
+        double xSeidelOrdem2[N];
+        int iterSeidelOrdem2 = 0;
+        std::chrono::high_resolution_clock::time_point inicioSeidelOrdem2 =
+            std::chrono::high_resolution_clock::now();
+        metodoGaussSeidelOrdem2(xSeidelOrdem2, tol, &iterSeidelOrdem2);
+        std::chrono::high_resolution_clock::time_point fimSeidelOrdem2 =
+            std::chrono::high_resolution_clock::now();
+        double tempoSeidelOrdem2 =
+            std::chrono::duration<double, std::milli>(fimSeidelOrdem2 - inicioSeidelOrdem2).count();
+
+        printf("--- Metodo de GAUSS-SEIDEL DE ORDEM 2 ---\n");
+        printf("Tempo exigido: %.6f ms\n", tempoSeidelOrdem2);
+        printf("Iteracoes ate convergir: %d\n", iterSeidelOrdem2);
+        imprimirVetor("Solucao x (Gauss-Seidel de ordem 2):", xSeidelOrdem2);
+        printf("Maior diferenca em relacao ao metodo direto: %e\n\n",
+               calcularErroMaximo(xSeidelOrdem2, xGauss));
+        registrarResultado(arquivoResultados, "GAUSS-SEIDEL DE ORDEM 2",
+                   tempoSeidelOrdem2, iterSeidelOrdem2,
+                   xSeidelOrdem2,
+                   calcularErroMaximo(xSeidelOrdem2, xGauss));
+
+        if (ehSimetrica)
+        {
+            double xGradiente[N];
+            int iterGradiente = 0;
+            std::chrono::high_resolution_clock::time_point inicioGradiente =
+                std::chrono::high_resolution_clock::now();
+            metodoGradienteConjugado(xGradiente, tol, &iterGradiente);
+            std::chrono::high_resolution_clock::time_point fimGradiente =
+                std::chrono::high_resolution_clock::now();
+            double tempoGradiente = std::chrono::duration<double, std::milli>(fimGradiente - inicioGradiente).count();
+
+            printf("--- Metodo do GRADIENTE CONJUGADO ---\n");
+            printf("Tempo exigido: %.6f ms\n", tempoGradiente);
+            printf("Iteracoes ate convergir: %d\n", iterGradiente);
+            imprimirVetor("Solucao x (Gradiente Conjugado):", xGradiente);
+            printf("Maior diferenca em relacao ao metodo direto: %e\n\n",
+                   calcularErroMaximo(xGradiente, xGauss));
+                 registrarResultado(arquivoResultados, "GRADIENTE CONJUGADO",
+                           tempoGradiente, iterGradiente, xGradiente,
+                           calcularErroMaximo(xGradiente, xGauss));
+        }
+        else
+        {
+            double xCGS[N];
+            int iterCGS = 0;
+            std::chrono::high_resolution_clock::time_point inicioCGS =
+                std::chrono::high_resolution_clock::now();
+            metodoGradienteConjugadoQuadrado(xCGS, tol, &iterCGS);
+            std::chrono::high_resolution_clock::time_point fimCGS =
+                std::chrono::high_resolution_clock::now();
+            double tempoCGS = std::chrono::duration<double, std::milli>(fimCGS - inicioCGS).count();
+
+            printf("--- Metodo do GRADIENTE CONJUGADO QUADRADO (CGS) ---\n");
+            printf("Tempo exigido: %.6f ms\n", tempoCGS);
+            if (iterCGS >= 0)
+                printf("Iteracoes ate convergir: %d\n", iterCGS);
+            else
+                printf("Status: NAO CONVERGIU (criterio nao atingido)\n");
+            imprimirVetor("Solucao x (CGS):", xCGS);
+            printf("Maior diferenca em relacao ao metodo direto: %e\n\n",
+                   calcularErroMaximo(xCGS, xGauss));
+            registrarResultado(arquivoResultados,
+                               "GRADIENTE CONJUGADO QUADRADO (CGS)",
+                               tempoCGS, iterCGS, xCGS,
+                               calcularErroMaximo(xCGS, xGauss));
+        }
     }
 
+    fclose(arquivoResultados);
     return 0;
 }

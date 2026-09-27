@@ -1,0 +1,68 @@
+CONDICIONAMENTO DA MATRIZ A E DAS MATRIZES DE ITERACAO
+M1=Jacobi, M2=Gauss-Seidel, M3=Jacobi ordem 2, M4=Gauss-Seidel ordem 2.
+Condicionamento: kappa(B)=||B||*||B^-1||.
+
+A (36 x 36)
+Euclidiana                   norma=3.582368e+00  cond=6.452663e+00
+  ponderada                 norma=4.041459e+00  cond=1.257914e+01
+Soma maxima de colunas       norma=5.333400e+00  cond=1.365091e+01
+  ponderada                 norma=5.333400e+00  cond=2.751369e+01
+Soma maxima de linhas        norma=5.333400e+00  cond=1.499944e+01
+  ponderada                 norma=8.389128e+00  cond=3.757540e+01
+Frobenius                    norma=1.219194e+01  cond=6.223314e+01
+  ponderada                 norma=1.340082e+01  cond=8.190424e+01
+Maximo                       norma=2.666700e+00  cond=2.666700e+00
+  ponderada                 norma=2.666700e+00  cond=2.666700e+00
+Versao ponderada: W = diag(|A[i][i]|), aplicada por W*B*W^-1.
+
+M1 - Jacobi (36 x 36)
+Euclidiana                   norma=7.813955e-01  cond=         inf
+  ponderada                 norma=1.214328e+00  cond=         inf
+Soma maxima de colunas       norma=1.000000e+00  cond=         inf
+  ponderada                 norma=1.200100e+00  cond=         inf
+Soma maxima de linhas        norma=1.000000e+00  cond=         inf
+  ponderada                 norma=2.145884e+00  cond=         inf
+Frobenius                    norma=1.445693e+00  cond=         inf
+  ponderada                 norma=2.537842e+00  cond=         inf
+Maximo                       norma=1.750103e-01  cond=         inf
+  ponderada                 norma=4.667000e-01  cond=         inf
+Versao ponderada: W = diag(|A[i][i]|), aplicada por W*B*W^-1.
+
+M2 - Gauss-Seidel (36 x 36)
+Euclidiana                   norma=1.292098e+00  cond=         inf
+  ponderada                 norma=1.803554e+00  cond=         inf
+Soma maxima de colunas       norma=1.790024e+00  cond=         inf
+  ponderada                 norma=2.385902e+00  cond=         inf
+Soma maxima de linhas        norma=2.097963e+00  cond=         inf
+  ponderada                 norma=3.097187e+00  cond=         inf
+Frobenius                    norma=1.825918e+00  cond=         inf
+  ponderada                 norma=3.006851e+00  cond=         inf
+Maximo                       norma=2.542313e-01  cond=         inf
+  ponderada                 norma=5.125323e-01  cond=         inf
+Versao ponderada: W = diag(|A[i][i]|), aplicada por W*B*W^-1.
+
+M3 - Jacobi ordem 2 (72 x 72)
+Euclidiana                   norma=1.454685e+00  cond=         inf
+  ponderada                 norma=2.081846e+00  cond=         inf
+Soma maxima de colunas       norma=3.000000e+00  cond=         inf
+  ponderada                 norma=3.300150e+00  cond=         inf
+Soma maxima de linhas        norma=2.000000e+00  cond=         inf
+  ponderada                 norma=3.718825e+00  cond=         inf
+Frobenius                    norma=7.050004e+00  cond=         inf
+  ponderada                 norma=7.713070e+00  cond=         inf
+Maximo                       norma=1.000000e+00  cond=         inf
+  ponderada                 norma=1.000000e+00  cond=         inf
+Versao ponderada: W = diag(|A[i][i]|), aplicada por W*B*W^-1.
+
+M4 - Gauss-Seidel ordem 2 (72 x 72)
+Euclidiana                   norma=1.833411e+00  cond=         inf
+  ponderada                 norma=2.694382e+00  cond=         inf
+Soma maxima de colunas       norma=3.982027e+00  cond=         inf
+  ponderada                 norma=5.078853e+00  cond=         inf
+Soma maxima de linhas        norma=3.443211e+00  cond=         inf
+  ponderada                 norma=4.993048e+00  cond=         inf
+Frobenius                    norma=7.173385e+00  cond=         inf
+  ponderada                 norma=8.018641e+00  cond=         inf
+Maximo                       norma=1.000000e+00  cond=         inf
+  ponderada                 norma=1.000000e+00  cond=         inf
+Versao ponderada: W = diag(|A[i][i]|), aplicada por W*B*W^-1.
