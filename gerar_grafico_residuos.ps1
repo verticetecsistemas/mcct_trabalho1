@@ -1,4 +1,11 @@
-$conteudo = Get-Content -Raw -Path (Join-Path $PSScriptRoot 'residuos_iteracoes.txt')
+param(
+    [string]$Metodo = 'Gradiente',
+    [string]$ArquivoEntrada = 'residuos_iteracoes.txt',
+    [string]$ArquivoSaida = 'grafico_residuos.svg',
+    [switch]$AbrirNoNavegador
+)
+
+$conteudo = Get-Content -Raw -Path (Join-Path $PSScriptRoot $ArquivoEntrada)
 [System.Threading.Thread]::CurrentThread.CurrentCulture = [System.Globalization.CultureInfo]::InvariantCulture
 
 $blocos = [regex]::Matches(
@@ -69,8 +76,8 @@ $cores = @('#d1495b', '#00798c', '#edae49', '#30638e', '#8a5a44', '#7a9d54', '#9
 $svg = [System.Text.StringBuilder]::new()
 [void]$svg.AppendLine(('<svg xmlns="http://www.w3.org/2000/svg" width="{0}" height="{1}" viewBox="0 0 {0} {1}">' -f $largura, $altura))
 [void]$svg.AppendLine('<rect width="100%" height="100%" fill="#f7f4ed"/>')
-[void]$svg.AppendLine('<text x="85" y="32" font-family="Arial" font-size="22" font-weight="bold" fill="#17202a">Convergencia do Metodo do Gradiente por chute inicial</text>')
-[void]$svg.AppendLine('<text x="85" y="52" font-family="Arial" font-size="13" fill="#52616b">G(x,y,z) (escala log10) por iteracao - residuos_iteracoes.txt</text>')
+[void]$svg.AppendLine(( '<text x="85" y="32" font-family="Arial" font-size="22" font-weight="bold" fill="#17202a">Convergencia do Metodo de {0} por chute inicial</text>' -f [System.Security.SecurityElement]::Escape($Metodo)))
+[void]$svg.AppendLine(( '<text x="85" y="52" font-family="Arial" font-size="13" fill="#52616b">G(x,y,z) (escala log10) por iteracao - {0}</text>' -f [System.Security.SecurityElement]::Escape($ArquivoEntrada)))
 
 for ($marca = 0; $marca -le ($maxLog - $minLog); $marca++) {
     $valorLog = $minLog + $marca
@@ -110,6 +117,17 @@ foreach ($i in 0..5) {
 [void]$svg.AppendLine(('<text x="20" y="{0}" transform="rotate(-90 20,{0})" text-anchor="middle" font-family="Arial" font-size="14" fill="#17202a">G(x,y,z) (log10)</text>' -f ($margemTopo + $plotAltura / 2)))
 [void]$svg.AppendLine('</svg>')
 
-$caminhoSaida = Join-Path $PSScriptRoot 'grafico_residuos.svg'
+$caminhoSaida = Join-Path $PSScriptRoot $ArquivoSaida
 [System.IO.File]::WriteAllText($caminhoSaida, $svg.ToString(), [System.Text.Encoding]::UTF8)
 Write-Host "Grafico criado em $caminhoSaida"
+
+if ($AbrirNoNavegador) {
+    $uriSaida = [System.Uri]::new([System.IO.Path]::GetFullPath($caminhoSaida)).AbsoluteUri
+    try {
+        Start-Process -FilePath $uriSaida -ErrorAction Stop
+    }
+    catch {
+        Write-Error "Nao foi possivel abrir o grafico no navegador: $_"
+        exit 1
+    }
+}

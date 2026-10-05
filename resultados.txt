@@ -1,7 +1,7 @@
 RESULTADOS DA RESOLUCAO DO SISTEMA LINEAR
 
 --- ELIMINACAO DE GAUSS ---
-Tempo exigido: 0.076000 ms
+Tempo exigido: 0.088800 ms
 Status: CONVERGIU
 Iteracoes ate convergir: 0
 Solucao:
@@ -48,7 +48,7 @@ CRITERIO DE PARADA: |x_i^(k+1) - x_i^(k)| < 1e-04
 ===========================================================
 
 --- JACOBI ---
-Tempo exigido: 0.139700 ms
+Tempo exigido: 0.267200 ms
 Status: CONVERGIU
 Iteracoes ate convergir: 26
 Solucao:
@@ -91,7 +91,7 @@ Solucao:
 Maior diferenca em relacao ao metodo direto: 2.080983e-04
 
 --- GAUSS-SEIDEL ---
-Tempo exigido: 0.066500 ms
+Tempo exigido: 0.068100 ms
 Status: CONVERGIU
 Iteracoes ate convergir: 15
 Solucao:
@@ -134,7 +134,7 @@ Solucao:
 Maior diferenca em relacao ao metodo direto: 9.270041e-05
 
 --- JACOBI DE ORDEM 2 ---
-Tempo exigido: 0.244300 ms
+Tempo exigido: 0.259900 ms
 Status: CONVERGIU
 Iteracoes ate convergir: 36
 Solucao:
@@ -177,7 +177,7 @@ Solucao:
 Maior diferenca em relacao ao metodo direto: 3.237944e-05
 
 --- GAUSS-SEIDEL DE ORDEM 2 ---
-Tempo exigido: 0.232800 ms
+Tempo exigido: 0.222900 ms
 Status: CONVERGIU
 Iteracoes ate convergir: 46
 Solucao:
@@ -220,7 +220,7 @@ Solucao:
 Maior diferenca em relacao ao metodo direto: 8.952217e-05
 
 --- GRADIENTE CONJUGADO QUADRADO (CGS) ---
-Tempo exigido: 0.013300 ms
+Tempo exigido: 0.013400 ms
 Status: NAO CONVERGIU
 Iteracoes ate convergir: nao atingiu o criterio
 Solucao:
@@ -267,7 +267,7 @@ CRITERIO DE PARADA: |x_i^(k+1) - x_i^(k)| < 1e-08
 ===========================================================
 
 --- JACOBI ---
-Tempo exigido: 0.311800 ms
+Tempo exigido: 0.283000 ms
 Status: CONVERGIU
 Iteracoes ate convergir: 54
 Solucao:
@@ -310,7 +310,7 @@ Solucao:
 Maior diferenca em relacao ao metodo direto: 2.059542e-08
 
 --- GAUSS-SEIDEL ---
-Tempo exigido: 0.150000 ms
+Tempo exigido: 0.138800 ms
 Status: CONVERGIU
 Iteracoes ate convergir: 30
 Solucao:
@@ -353,7 +353,7 @@ Solucao:
 Maior diferenca em relacao ao metodo direto: 6.203872e-09
 
 --- JACOBI DE ORDEM 2 ---
-Tempo exigido: 0.265200 ms
+Tempo exigido: 0.283800 ms
 Status: CONVERGIU
 Iteracoes ate convergir: 67
 Solucao:
@@ -396,7 +396,7 @@ Solucao:
 Maior diferenca em relacao ao metodo direto: 6.398720e-09
 
 --- GAUSS-SEIDEL DE ORDEM 2 ---
-Tempo exigido: 0.340500 ms
+Tempo exigido: 0.472100 ms
 Status: CONVERGIU
 Iteracoes ate convergir: 79
 Solucao:
@@ -439,7 +439,7 @@ Solucao:
 Maior diferenca em relacao ao metodo direto: 1.412081e-08
 
 --- GRADIENTE CONJUGADO QUADRADO (CGS) ---
-Tempo exigido: 0.013800 ms
+Tempo exigido: 0.025000 ms
 Status: NAO CONVERGIU
 Iteracoes ate convergir: nao atingiu o criterio
 Solucao:
